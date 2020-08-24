@@ -29,10 +29,8 @@ import android.view.SurfaceView;
 import android.view.WindowManager;
 
 import com.google.zxing.BinaryBitmap;
-import com.google.zxing.ChecksumException;
 import com.google.zxing.DecodeHintType;
-import com.google.zxing.FormatException;
-import com.google.zxing.NotFoundException;
+import com.google.zxing.MultiFormatReader;
 import com.google.zxing.PlanarYUVLuminanceSource;
 import com.google.zxing.Result;
 import com.google.zxing.ResultPoint;
@@ -63,8 +61,8 @@ public class QRCodeReaderView extends SurfaceView
     private OnQRCodeReadListener mOnQRCodeReadListener;
 
     private static final String TAG = QRCodeReaderView.class.getName();
-
-    private QRCodeReader mQRCodeReader;
+    private MultiFormatReader multiFormatReader;
+   // private QRCodeReader mQRCodeReader;
     private int mPreviewWidth;
     private int mPreviewHeight;
     private CameraManager mCameraManager;
@@ -229,7 +227,8 @@ public class QRCodeReaderView extends SurfaceView
         }
 
         try {
-            mQRCodeReader = new QRCodeReader();
+            multiFormatReader = new MultiFormatReader();
+            //mQRCodeReader = new QRCodeReader();
             mCameraManager.startPreview();
         } catch (Exception e) {
             SimpleLog.e(TAG, "Exception: " + e.getMessage());
@@ -370,15 +369,12 @@ public class QRCodeReaderView extends SurfaceView
             final BinaryBitmap bitmap = new BinaryBitmap(hybBin);
 
             try {
-                return view.mQRCodeReader.decode(bitmap, hintsRef.get());
-            } catch (ChecksumException e) {
-                SimpleLog.d(TAG, "ChecksumException", e);
-            } catch (NotFoundException e) {
-                SimpleLog.d(TAG, "No QR Code found");
-            } catch (FormatException e) {
-                SimpleLog.d(TAG, "FormatException", e);
+                return view.multiFormatReader.decode(bitmap, hintsRef.get());
+                //return view.mQRCodeReader.decode(bitmap, hintsRef.get());
+            } catch (Exception e) {
+                SimpleLog.d(TAG, e.getClass().getSimpleName(), e);
             } finally {
-                view.mQRCodeReader.reset();
+                view.multiFormatReader.reset();
             }
 
             return null;
