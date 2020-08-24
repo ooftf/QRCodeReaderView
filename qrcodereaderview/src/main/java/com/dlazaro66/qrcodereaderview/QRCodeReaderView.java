@@ -369,6 +369,7 @@ public class QRCodeReaderView extends SurfaceView
             final BinaryBitmap bitmap = new BinaryBitmap(hybBin);
 
             try {
+
                 return view.multiFormatReader.decode(bitmap, hintsRef.get());
                 //return view.mQRCodeReader.decode(bitmap, hintsRef.get());
             } catch (Exception e) {
@@ -376,7 +377,14 @@ public class QRCodeReaderView extends SurfaceView
             } finally {
                 view.multiFormatReader.reset();
             }
-
+            try {
+                view.multiFormatReader.decode(bitmap, null);
+                //return view.mQRCodeReader.decode(bitmap, hintsRef.get());
+            } catch (Exception e) {
+                SimpleLog.d(TAG, e.getClass().getSimpleName(), e);
+            } finally {
+                view.multiFormatReader.reset();
+            }
             return null;
         }
 
