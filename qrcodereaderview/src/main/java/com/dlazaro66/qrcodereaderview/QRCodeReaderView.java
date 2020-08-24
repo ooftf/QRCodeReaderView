@@ -36,7 +36,6 @@ import com.google.zxing.Result;
 import com.google.zxing.ResultPoint;
 import com.google.zxing.client.android.camera.CameraManager;
 import com.google.zxing.common.HybridBinarizer;
-import com.google.zxing.qrcode.QRCodeReader;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -62,7 +61,7 @@ public class QRCodeReaderView extends SurfaceView
 
     private static final String TAG = QRCodeReaderView.class.getName();
     private MultiFormatReader multiFormatReader;
-   // private QRCodeReader mQRCodeReader;
+    // private QRCodeReader mQRCodeReader;
     private int mPreviewWidth;
     private int mPreviewHeight;
     private CameraManager mCameraManager;
@@ -352,6 +351,7 @@ public class QRCodeReaderView extends SurfaceView
         DecodeFrameTask(QRCodeReaderView view, Map<DecodeHintType, Object> hints) {
             viewRef = new WeakReference<>(view);
             hintsRef = new WeakReference<>(hints);
+            view.multiFormatReader.setHints(hintsRef.get());
         }
 
         @Override
@@ -360,25 +360,31 @@ public class QRCodeReaderView extends SurfaceView
             if (view == null) {
                 return null;
             }
+            byte[] data = params[0];
+            int height = view.mPreviewHeight;
+            int width = view.mPreviewWidth;
+            byte[] rotatedData = new byte[data.length];
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < width; x++) {
+                    rotatedData[x * height + height - y - 1] = data[x + y * width];
+                }
+            }
+            int tmp = width; // Here we are swapping, that's the difference to #11
+            width = height;
+            height = tmp;
+            data = rotatedData;
+
 
             final PlanarYUVLuminanceSource source =
-                    view.mCameraManager.buildLuminanceSource(params[0], view.mPreviewWidth,
-                            view.mPreviewHeight);
+                    view.mCameraManager.buildLuminanceSource(data, width,
+                            height);
 
             final HybridBinarizer hybBin = new HybridBinarizer(source);
             final BinaryBitmap bitmap = new BinaryBitmap(hybBin);
 
             try {
+                return view.multiFormatReader.decodeWithState(bitmap);
 
-                return view.multiFormatReader.decode(bitmap, hintsRef.get());
-                //return view.mQRCodeReader.decode(bitmap, hintsRef.get());
-            } catch (Exception e) {
-                SimpleLog.d(TAG, e.getClass().getSimpleName(), e);
-            } finally {
-                view.multiFormatReader.reset();
-            }
-            try {
-                view.multiFormatReader.decode(bitmap, null);
                 //return view.mQRCodeReader.decode(bitmap, hintsRef.get());
             } catch (Exception e) {
                 SimpleLog.d(TAG, e.getClass().getSimpleName(), e);
